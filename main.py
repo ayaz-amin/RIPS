@@ -13,9 +13,9 @@ obs = env.reset()
 for epoch in range(100):
     while True:
         env.render()
-        action, action_probs = model(env)
+        action_dist = model(env)
         #action = env.action_space.sample()
-        obs, reward, done, _ = env.step(action)
+        obs, reward, done, _ = env.step(action_dist.sampel().item())
 
         if done:
             break

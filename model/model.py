@@ -77,9 +77,8 @@ class Model(nn.Module):
                     if condition:
                         action_probs[action] += 1
 
-        action_probs = F.log_softmax(action_probs, dim=0)
-        sample_action = dist.Categorical(action_probs).sample()
-        return sample_action.item(), action_probs[sample_action]
+        normalized_action_probs = F.log_softmax(action_probs, dim=0)
+        return dist.Categorical(normalized_action_probs) 
 
 
 class AtActionCell(nn.Module):
