@@ -79,7 +79,3 @@ class EntityExtractor(Constants):
             soft_right = right - 1
 
             return left, mid, right, soft_left, soft_right, right, left, left, right
-
-
-
-
