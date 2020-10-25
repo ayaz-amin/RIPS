@@ -1,7 +1,7 @@
-## RIPS
+# RIPS
 Reward Induced Program Synthesis for sample efficient and zero-shot reinforcement learning.
 
-# Dev Log
+## Dev Log
 RIPS #001 "DOPPLER":
 - Pros: solved entity extractor that parses environment details into objects.
 - Cons: very, very slow (~ 1 minute for each step) due to enumerating over all the cells of the input space.
