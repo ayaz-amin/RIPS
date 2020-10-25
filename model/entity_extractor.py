@@ -1,81 +1,48 @@
-# Also ripped (but modified) off from https://github.com/cog-isa/schema-rl/
+# Custom entity extractor based on convolutional filters
 
 import numpy as np
-from .constants import Constants
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
-class EntityExtractor(Constants):
-    @classmethod
-    def extract(cls, env):
-        """
-        :param env: object, child of BreakoutEngine
-        """
-        matrix = np.zeros((cls.N, cls.M), dtype=int)
+class EntityExtractor(nn.Module):
+    def __init__(self, input_channels, num_objects):
+        super(EntityExtractor, self).__init__()
 
-        for ball in env.balls:
-            if ball.is_entity:
-                for state, eid in env.parse_object_into_pixels(ball):
-                    idx = cls.get_entity_idx(state)
-                    matrix[idx][cls.BALL_IDX] = 0
+        self.input_channels = input_channels
+        self.filters = nn.Sequential(
+                nn.Conv2d(input_channels, 32, kernel_size=3, padding=1),
+                nn.ReLU(True),
+                nn.MaxPool2d((2, 2)),
+                nn.Conv2d(32, 64, kernel_size=3, padding=1),
+                nn.ReLU(True),
+                nn.MaxPool2d((2, 2)),
+                nn.Conv2d(64, num_objects, kernel_size=1),
+                nn.Sigmoid()
+                )
 
-        if env.paddle.is_entity:
-            for state, eid in env.parse_object_into_pixels(env.paddle):
-                idx = cls.get_entity_idx(state)
-                matrix[idx][cls.PADDLE_IDX] = 1
+    def obs_to_torch(self, obs):
+        height, width = obs.shape[0], obs.shape[1]
+        obs = torch.from_numpy(obs.copy()).float()
+        return obs.view(1, self.input_channels, height, width)
 
-        for wall in env.walls:
-            if wall.is_entity:
-                for state, eid in env.parse_object_into_pixels(wall):
-                    idx = cls.get_entity_idx(state)
-                    matrix[idx][cls.WALL_IDX] = 2
+    def parsed_objects(self, z):
+        object_blackboard = torch.zeros(z.shape[2], z.shape[3])
+        
+        z = z.view(z.shape[1], z.shape[2], z.shape[3])
+        for object_idx in range(z.shape[0]):
+            for r in range(z.shape[1]):
+                for c in range(z.shape[2]):
+                    if z[object_idx, r, c] != 0:
+                        object_blackboard[r][c] = object_idx
+        
+        print(object_blackboard)
 
-        for brick in env.bricks:
-            if brick.is_entity:
-                for state, eid in env.parse_object_into_pixels(brick):
-                    idx = cls.get_entity_idx(state)
-                    matrix[idx][cls.BRICK_IDX] = 3
+        return object_blackboard.detach().numpy()
 
-        # raise VOID bit
-        void_mask = ~matrix.any(axis=1)
-        matrix[void_mask, cls.VOID_IDX] = -1
-        matrix = matrix.reshape(cls.M, cls.SCREEN_WIDTH, cls.SCREEN_HEIGHT)
-        return matrix.max(0)
-
-    @classmethod
-    def transform_pos_to_index(cls, pos):
-        return pos[0] * cls.SCREEN_WIDTH + pos[1]
-
-    @classmethod
-    def get_entity_pos(cls, state):
-        return [*state][0][1]
-
-    @classmethod
-    def get_entity_idx(cls, state):
-        pos = cls.get_entity_pos(state)
-        idx = cls.transform_pos_to_index(pos)
-        return idx
-
-    @classmethod
-    def get_ball_x(cls, env):
-        for ball in env.balls:
-            if ball.is_entity:
-                for state, eid in env.parse_object_into_pixels(ball):
-                    pos = cls.get_entity_pos(state)
-                    return pos[1]
-    @classmethod
-    def get_paddle_keypoints(cls, env):
-        if env.paddle.is_entity:
-            pixels = env.parse_object_into_pixels(env.paddle)
-
-            mid_state, eid = pixels[len(pixels) // 2]
-            mid_pos = cls.get_entity_pos(mid_state)
-            mid = mid_pos[1]
-            offset = cls.DEFAULT_PADDLE_SHAPE[0] // 2
-
-            left = mid - offset + 1
-            right = mid + offset - 1
-
-            soft_left = left + 1
-            soft_right = right - 1
-
-            return left, mid, right, soft_left, soft_right, right, left, left, right
+    def forward(self, obs):
+        obs = self.obs_to_torch(obs)
+        z = self.filters(obs)
+        return self.parsed_objects(z)

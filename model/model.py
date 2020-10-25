@@ -58,17 +58,17 @@ def scanning(direction, true_condition, false_condition, cell, obs, max_timeout=
 # My classes
 class Model(nn.Module):
     # Container for program synthesis model
-    def __init__(self, object_types, action_types, num_programs):
+    def __init__(self, input_channels, object_types, action_types, num_programs):
         super(Model, self).__init__()
 
-        self.feature_extractor = EntityExtractor()
+        self.feature_extractor = EntityExtractor(input_channels, object_types)
         self.action_types = action_types
         self.programs = nn.ModuleList()
         for i in range(num_programs):
             self.programs.append(AtActionCell(object_types, action_types))
 
-    def forward(self, env):
-        obs = self.feature_extractor.extract(env)
+    def forward(self, obs):
+        obs = self.feature_extractor(obs)
         action_probs = torch.zeros(self.action_types)
         for r in range(obs.shape[0]):
             for c in range(obs.shape[1]):
