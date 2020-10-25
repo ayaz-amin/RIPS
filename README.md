@@ -1,5 +1,5 @@
 # RIPS
-Reward Induced Program Synthesis for sample efficient and zero-shot reinforcement learning.
+Reward Induced Program Synthesis for sample efficient and zero-shot reinforcement learning. The current version in the ```master branch``` is the most recent version of RIPS.
 
 ## Dev Log
 RIPS #001 "DOPPLER" (2020-10-24):

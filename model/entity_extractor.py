@@ -37,8 +37,6 @@ class EntityExtractor(nn.Module):
                 for c in range(z.shape[2]):
                     if z[object_idx, r, c] != 0:
                         object_blackboard[r][c] = object_idx
-        
-        print(object_blackboard)
 
         return object_blackboard.detach().numpy()
 
