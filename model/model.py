@@ -77,7 +77,7 @@ class Model(nn.Module):
                     if condition:
                         action_probs[action] += 1
 
-        normalized_action_probs = F.log_softmax(action_probs, dim=0)
+        normalized_action_probs = F.softmax(action_probs, dim=0)
         return dist.Categorical(normalized_action_probs) 
 
 
@@ -97,14 +97,16 @@ class AtActionCell(nn.Module):
             (1, -1), (-1, -1)
         ]
 
+        self.is_not = nn.Parameter(torch.ones(2))
+
     def forward(self, cell, obs):
         # Sample function parameters
-        object_probs = F.log_softmax(self.object_types, dim=0)
-        positive_object_probs = F.log_softmax(self.positive_object_types, dim=0)
-        negative_object_probs = F.log_softmax(self.negative_object_types, dim=0)
+        object_probs = F.softmax(self.object_types, dim=0)
+        positive_object_probs = F.softmax(self.positive_object_types, dim=0)
+        negative_object_probs = F.softmax(self.negative_object_types, dim=0)
 
-        action_probs = F.log_softmax(self.action_types, dim=0)
-        direction_probs = F.log_softmax(self.direction_types, dim=0)
+        action_probs = F.softmax(self.action_types, dim=0)
+        direction_probs = F.softmax(self.direction_types, dim=0)
 
         sample_object = dist.Categorical(object_probs).sample()
         sample_positive_object = dist.Categorical(positive_object_probs).sample()
@@ -114,6 +116,9 @@ class AtActionCell(nn.Module):
         sample_direction = dist.Categorical(direction_probs).sample()
 
         direction = self.directions[sample_direction]
+
+        is_not_probs = F.softmax(self.is_not, dim=0)
+        is_not = dist.Categorical(is_not_probs).sample()
 
         # Main program
         condition = at_cell_with_value(
@@ -127,5 +132,8 @@ class AtActionCell(nn.Module):
             ),
             obs
         )
+
+        if is_not.item():
+            condition = not condition
 
         return condition, sample_action
