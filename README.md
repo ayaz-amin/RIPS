@@ -2,7 +2,7 @@
 Reward Induced Program Synthesis for sample efficient and zero-shot reinforcement learning. The current version in the ```master branch``` is the most recent version of RIPS.
 
 ## Dev Log
-RIPS #001 "DOPPLER" (2020-10-24):
+RIPS #001 "DOPPLER" (2020-10-24 to 2020-10-25):
 - Pros: solved entity extractor that parses environment details into objects.
 - Cons: very, very slow (~ 1 minute for each step) due to enumerating over all the cells of the input space.
 
