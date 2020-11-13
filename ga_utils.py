@@ -1,4 +1,4 @@
-from copy import copy
+from copy import deepcopy
 
 import torch
 import torch.distributions as dist
@@ -14,7 +14,7 @@ def squeeze_params(model):
 def sample_models(model, num_pop):
     model_zoo = []
     for _ in range(num_pop):
-        child = copy(model)
+        child = deepcopy(model)
         child_params = squeeze_params(model)
         for param in child_params:
             if param.requires_grad:
