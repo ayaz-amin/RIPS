@@ -1,5 +1,4 @@
 from copy import copy
-import numpy as np
 
 import torch
 import torch.distributions as dist
